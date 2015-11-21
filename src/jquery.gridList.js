@@ -195,8 +195,7 @@
           x: Number($(element).attr('data-x')),
           y: Number($(element).attr('data-y')),
           w: Number($(element).attr('data-w')),
-          h: Number($(element).attr('data-h')),
-          id: Number($(element).attr('data-id'))
+          h: Number($(element).attr('data-h'))
         });
       });
       return items;
