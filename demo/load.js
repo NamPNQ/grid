@@ -40,7 +40,7 @@ var DemoGrid = {
         $element.addClass('changed')
         setTimeout(function() {
           $element.removeClass('changed');
-        }, 0);
+        }, 10);
       })(items[i].$element);
     }
   }
