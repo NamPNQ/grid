@@ -60,9 +60,8 @@ body {
     -webkit-transition: none;
             transition: none;
   }
-  .grid li.ui-draggable-dragging {
-    -webkit-transition: none;
-            transition: none;
+  .grid li.is-dragging {
+    z-index: 2;
   }
   .grid li.position-highlight {
     -webkit-transition: none;

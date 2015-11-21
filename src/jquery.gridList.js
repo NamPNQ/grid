@@ -30,9 +30,7 @@
     },
 
     draggableDefaults: {
-      zIndex: 2,
-      scroll: false,
-      containment: "parent"
+      containment: true
     },
 
     destroy: function() {
@@ -83,6 +81,8 @@
        */
       var that = this;
       return function() {
+        var they = this;
+        Array.prototype.unshift.call(arguments, they);
         return fn.apply(that, arguments);
       };
     },
@@ -104,9 +104,8 @@
       this.reflow();
 
       if (this.options.dragAndDrop) {
-        // Init Draggable JQuery UI plugin for each of the list items
-        // http://api.jqueryui.com/draggable/
-        this.$items.draggable(this.draggableOptions);
+        // Replace jquery.ui by draggabilly
+        this.$items.draggabilly(this.draggableOptions);
       }
     },
 
@@ -123,18 +122,18 @@
       this._onStart = this._bindMethod(this._onStart);
       this._onDrag = this._bindMethod(this._onDrag);
       this._onStop = this._bindMethod(this._onStop);
-      this.$items.on('dragstart', this._onStart);
-      this.$items.on('drag', this._onDrag);
-      this.$items.on('dragstop', this._onStop);
+      this.$items.on('dragStart', this._onStart);
+      this.$items.on('dragMove', this._onDrag);
+      this.$items.on('dragEnd', this._onStop);
     },
 
     _unbindEvents: function() {
-      this.$items.off('dragstart', this._onStart);
-      this.$items.off('drag', this._onDrag);
-      this.$items.off('dragstop', this._onStop);
+      this.$items.off('dragStart', this._onStart);
+      this.$items.off('dragMove', this._onDrag);
+      this.$items.off('dragEnd', this._onStop);
     },
 
-    _onStart: function(event, ui) {
+    _onStart: function() {
       // Create a deep copy of the items; we use them to revert the item
       // positions after each drag change, making an entire drag operation less
       // distructable
@@ -146,10 +145,13 @@
       this._maxGridCols = this.gridList.grid.length;
     },
 
-    _onDrag: function(event, ui) {
-      var item = this._getItemByElement(ui.helper),
+    _onDrag: function(they) {
+      var 
+          draggie = $(they).data('draggabilly'),
+          item = this._getItemByElement(draggie.$element),
           newPosition = this._snapItemPositionToGrid(item);
 
+      item.move = true;
       if (this._dragPositionChanged(newPosition)) {
         this._previousDragPosition = newPosition;
 
@@ -159,7 +161,7 @@
 
         // Since the items list is a deep copy, we need to fetch the item
         // corresponding to this drag action again
-        item = this._getItemByElement(ui.helper);
+        item = this._getItemByElement(draggie.$element);
         this.gridList.moveItemToPosition(item, newPosition);
 
         // Visually update item positions and highlight shape
@@ -168,13 +170,9 @@
       }
     },
 
-    _onStop: function(event, ui) {
+    _onStop: function(they) {
       this._updateGridSnapshot();
       this._previousDragPosition = null;
-
-      // HACK: jQuery.draggable removes this class after the dragstop callback,
-      // and we need it removed before the drop, to re-enable CSS transitions
-      $(ui.helper).removeClass('ui-draggable-dragging');
 
       this._applyPositionToItems();
       this._removePositionHighlight();
@@ -251,7 +249,7 @@
       // TODO: Implement group separators
       for (var i = 0; i < this.items.length; i++) {
         // Don't interfere with the positions of the dragged items
-        if (this.items[i].move) {
+        if (this.items[i].$element.is('.is-dragging')) {
           continue;
         }
         this.items[i].$element.css({
@@ -279,12 +277,12 @@
     },
 
     _snapItemPositionToGrid: function(item) {
-      var position = item.$element.position();
+      var position = item.$element.data('draggabilly').position;
 
-      position[0] -= this.$element.position().left;
+      // position[0] -= this.$element.position().left;
 
-      var col = Math.round(position.left / this._cellWidth),
-          row = Math.round(position.top / this._cellHeight);
+      var col = Math.round(position.x / this._cellWidth),
+          row = Math.round(position.y / this._cellHeight);
 
       // Keep item position within the grid and don't let the item create more
       // than one extra column
